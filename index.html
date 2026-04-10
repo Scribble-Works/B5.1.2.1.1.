@@ -119,33 +119,37 @@
         #timer-bar { width: 100%; height: 100%; background: var(--mathly-red); transition: width 1s linear; }
         
         .chart-frame { 
-            background: rgba(255,255,255,0.7); 
+            background: rgba(255,255,255,0.9); 
             border: 3px solid #d7ccc8; 
-            border-radius: 20px; 
-            padding: 10px; 
-            margin: 15px 0; 
-            height: 160px; 
+            border-radius: 15px; 
+            padding: 8px; 
+            margin: 15px auto; 
+            height: 180px; 
+            width: 180px;
             display: grid; 
             grid-template-columns: repeat(10, 1fr); 
             grid-template-rows: repeat(10, 1fr);
-            gap: 2px;
+            gap: 1px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
         }
 
         .grid-square {
             background: #fff;
-            border: 1px solid #ddd;
+            border: 0.5px solid #eee;
             width: 100%;
             height: 100%;
         }
         .grid-square.shaded {
             background: var(--mathly-blue);
+            box-shadow: inset 0 0 2px rgba(0,0,0,0.1);
         }
         
-        .key-badge { background: #fff9c4; border: 2px dashed #fbc02d; padding: 10px; border-radius: 12px; font-weight: 900; color: #856404; font-size: 0.9rem; margin-bottom: 12px; }
+        .key-badge { background: #fff9c4; border: 2px dashed #fbc02d; padding: 10px; border-radius: 12px; font-weight: 900; color: #856404; font-size: 0.85rem; margin-bottom: 12px; }
         .question-box { background: white; border-left: 10px solid var(--mathly-blue); padding: 15px; text-align: left; font-size: 1rem; font-weight: 800; border-radius: 0 20px 20px 0; }
-        input { width: 100%; padding: 12px; border-radius: 18px; border: 3px solid #dfe6e9; font-size: 2rem; text-align: center; font-weight: 900; margin: 12px 0; outline: none; }
+        input { width: 100%; padding: 12px; border-radius: 18px; border: 3px solid #dfe6e9; font-size: 2rem; text-align: center; font-weight: 900; margin: 12px 0; outline: none; transition: border-color 0.3s; }
+        input:focus { border-color: var(--mathly-blue); }
 
-        .level-map { display: flex; justify(content: center; gap: 8px; margin-top: 20px; }
+        .level-map { display: flex; justify-content: center; gap: 8px; margin-top: 20px; }
         .lvl-dot { width: 45px; height: 45px; border-radius: 14px; background: white; border: 3px solid #d7ccc8; display: flex; align-items: center; justify-content: center; font-weight: 900; cursor: pointer; font-size: 1.1rem; }
         .lvl-dot.active-lvl { background: var(--mathly-yellow); color: white; border-color: #f9a825; }
         .lvl-dot.locked { opacity: 0.4; cursor: not-allowed; }
@@ -192,10 +196,10 @@
                 <div id="lvl-indicator">LEVEL 1</div>
                 <div>⏳ <span id="timer-text">30</span>s</div>
             </div>
-            <div class="key-badge" id="key-ui">1 Large Square = 0.1 Unit</div>
+            <div class="key-badge" id="key-ui">1 Full Column = 0.1 Unit</div>
             <div class="chart-frame" id="graph-ui"></div>
             <div class="question-box" id="question-ui">Identify the shaded amount as a decimal.</div>
-            <input type="text" id="user-input" placeholder="0.00">
+            <input type="text" id="user-input" placeholder="0.00" inputmode="decimal">
             <button class="btn-green" onclick="submitAnswer()">SUBMIT DATA</button>
             <div id="feedback" style="height: 25px; margin-top: 12px; font-weight: 900; font-size: 0.95rem;"></div>
             <div class="tool-row">
@@ -220,15 +224,19 @@
             <h2 style="color: var(--wood-brown); margin-bottom: 20px; font-weight: 900; font-size: 1.4rem;">MISSION PROTOCOLS</h2>
             <ul style="text-align: left; font-size: 0.95rem; line-height: 1.8; font-weight: 700; list-style: none; margin-bottom: 25px;">
                 <li>🟦 <span style="color:var(--mathly-blue)">MODEL:</span> Read shaded graph squares.</li>
-                <li>🔢 <span style="color:var(--mathly-blue)">CONVERT:</span> Turn fractions like 1/4 into decimals.</li>
-                <li>🌟 <span style="color:var(--mathly-green)">UNLOCK:</span> Score 50+ to reach next precision.</li>
+                <li>🔢 <span style="color:var(--mathly-blue)">CONVERT:</span> Turn fractions into decimals.</li>
+                <li>🌟 <span style="color:var(--mathly-green)">UNLOCK:</span> Score 50+ to reach next precision level.</li>
             </ul>
             <button class="btn-green" onclick="toggleModal(false)">CONFIRMED</button>
         </div>
     </div>
 
     <script>
-        const audio = { bg: new Audio("BGMSound.mp3"), correct: new Audio("correctanswer.mp3"), wrong: new Audio("wronganswer.mp3") };
+        const audio = { 
+            bg: new Audio("BGMSound.mp3"), 
+            correct: new Audio("correctanswer.mp3"), 
+            wrong: new Audio("wronganswer.mp3") 
+        };
         audio.bg.loop = true;
         let isMuted = false;
 
@@ -249,7 +257,7 @@
             symbols = Array.from({length: 40}, () => ({
                 x: Math.random()*canvas.width, 
                 y: Math.random()*canvas.height - canvas.height,
-                char: ['.','0.1','0.01','0.001','='][Math.floor(Math.random()*5)],
+                char: ['.','0.1','0.01','0.001','=','1/2'][Math.floor(Math.random()*6)],
                 size: Math.random()*25 + 20, 
                 speed: Math.random()*1.5 + 1.0, 
                 color: MATHLY_COLORS[Math.floor(Math.random()*4)]
@@ -267,7 +275,7 @@
         }
         initBG(); drawBG();
 
-        let storageKey = 'decimal_mission_b5';
+        let storageKey = 'decimal_mission_b5_v2';
         let progress = JSON.parse(localStorage.getItem(storageKey)) || { unlocked: [1] };
         let state = { score: 0, qIdx: 1, currentLvl: 1, target: "", timer: null, mode: "" };
 
@@ -300,25 +308,22 @@
             const qBox = document.getElementById('question-ui');
             graphUi.innerHTML = '';
             
-            // Randomly pick between Visual Modeling or Fraction Conversion
             state.mode = Math.random() > 0.4 ? "MODEL" : "CONVERT";
 
             if (state.mode === "MODEL") {
-                let totalSquares = 100;
                 let shadedCount = 0;
-                
-                if (state.currentLvl === 1) { // Tenths
+                if (state.currentLvl === 1) { 
                     shadedCount = (Math.floor(Math.random() * 9) + 1) * 10;
                     state.target = (shadedCount / 100).toFixed(1);
                     document.getElementById('key-ui').innerText = "1 Full Column = 0.1 Units";
-                } else if (state.currentLvl === 2) { // Hundredths
-                    shadedCount = Math.floor(Math.random() * 90) + 5;
+                } else if (state.currentLvl === 2) { 
+                    shadedCount = Math.floor(Math.random() * 99) + 1;
                     state.target = (shadedCount / 100).toFixed(2);
                     document.getElementById('key-ui').innerText = "1 Small Square = 0.01 Units";
-                } else { // Thousandths (Representing 1/1000 concepts)
-                    shadedCount = Math.floor(Math.random() * 95) + 1;
+                } else { 
+                    shadedCount = Math.floor(Math.random() * 99) + 1;
                     state.target = (shadedCount / 1000).toFixed(3);
-                    document.getElementById('key-ui').innerText = "1 Tiny Dot = 0.001 Units";
+                    document.getElementById('key-ui').innerText = "1 Tiny Shaded Dot = 0.001 Units";
                 }
 
                 for(let i=0; i<100; i++) {
@@ -326,22 +331,22 @@
                     sq.className = 'grid-square' + (i < shadedCount ? ' shaded' : '');
                     graphUi.appendChild(sq);
                 }
-                qBox.innerText = "Write the shaded decimal value:";
+                qBox.innerText = "Identify the shaded decimal amount:";
             } else {
-                // Conversion mode
                 const fractions = [
                     {f: "1/2", d: "0.5"}, {f: "1/4", d: "0.25"}, {f: "3/4", d: "0.75"}, 
-                    {f: "1/5", d: "0.2"}, {f: "2/5", d: "0.4"}, {f: "4/5", d: "0.8"},
-                    {f: "1/8", d: "0.125"}, {f: "3/8", d: "0.375"}, {f: "5/8", d: "0.625"}
+                    {f: "1/5", d: "0.2"}, {f: "2/5", d: "0.4"}, {f: "1/10", d: "0.1"},
+                    {f: "1/8", d: "0.125"}, {f: "3/8", d: "0.375"}
                 ];
                 let pick = fractions[Math.floor(Math.random() * fractions.length)];
-                
-                // Adjust difficulty by level
                 if (state.currentLvl === 1 && pick.d.length > 3) pick = fractions[0]; 
 
                 state.target = pick.d;
                 qBox.innerText = `Convert this fraction to a decimal: ${pick.f}`;
-                graphUi.innerHTML = `<div style="grid-column: 1/11; grid-row: 1/11; display: flex; align-items: center; justify-content: center; font-size: 4rem; font-weight: 900; color: var(--wood-brown);">${pick.f}</div>`;
+                graphUi.style.display = 'flex';
+                graphUi.style.alignItems = 'center';
+                graphUi.style.justifyContent = 'center';
+                graphUi.innerHTML = `<div style="font-size: 4rem; font-weight: 900; color: var(--wood-brown);">${pick.f}</div>`;
             }
 
             document.getElementById('user-input').value = '';
@@ -369,14 +374,20 @@
             
             if(isCorrect) {
                 state.score += 10;
-                fb.innerText = "✓ ACCURACY VERIFIED!"; fb.style.color = "var(--mathly-green)";
+                fb.innerText = "✓ DATA VERIFIED!"; fb.style.color = "var(--mathly-green)";
                 if(!isMuted) audio.correct.play();
             } else {
-                fb.innerText = "✗ INCORRECT! TARGET WAS: " + state.target; fb.style.color = "var(--mathly-red)";
+                fb.innerText = "✗ INCORRECT! TARGET: " + state.target; fb.style.color = "var(--mathly-red)";
                 if(!isMuted) audio.wrong.play();
             }
             document.getElementById('score').innerText = state.score;
-            setTimeout(() => { if(state.qIdx < 10) { state.qIdx++; generateChallenge(); } else { endGame(); } }, 2000);
+            setTimeout(() => { 
+                if(state.qIdx < 10) { 
+                    state.qIdx++; 
+                    document.getElementById('graph-ui').style.display = 'grid'; // Reset display to grid
+                    generateChallenge(); 
+                } else { endGame(); } 
+            }, 2000);
         }
 
         function endGame() {
@@ -385,12 +396,12 @@
             document.getElementById('final-score').innerText = state.score;
             const msg = document.getElementById('end-msg');
             if(state.score >= 50) {
-                msg.innerText = "Precision Master! You've decoded the decimal system.";
+                msg.innerText = "Excellent Work! You've mastered decimal modeling.";
                 if(state.currentLvl < 3 && !progress.unlocked.includes(state.currentLvl + 1)) {
                     progress.unlocked.push(state.currentLvl + 1);
                     localStorage.setItem(storageKey, JSON.stringify(progress));
                 }
-            } else { msg.innerText = "The graph sheets are unreadable. Practice your conversions!"; }
+            } else { msg.innerText = "Keep practicing to improve your precision!"; }
         }
 
         function exitToMenu() {
@@ -403,13 +414,13 @@
         }
 
         function getHint() {
-            let hintText = state.mode === "MODEL" ? "Count by tenths (0.1) for columns!" : "Divide the top number by the bottom number.";
+            let hintText = state.mode === "MODEL" ? "Each full row or column is 10 squares (0.1)!" : "Try dividing the numerator by the denominator.";
             document.getElementById('feedback').innerText = `HINT: ${hintText}`;
             document.getElementById('feedback').style.color = "var(--mathly-yellow)";
         }
 
         function toggleModal(s) { document.getElementById('rules-modal').style.display = s ? 'flex' : 'none'; }
-        function resetData() { if(confirm("Reset all mission progress?")) { localStorage.removeItem(storageKey); location.reload(); } }
+        function resetData() { if(confirm("Reset all progress?")) { localStorage.removeItem(storageKey); location.reload(); } }
         document.getElementById('user-input').addEventListener('keypress', (e) => { if(e.key === 'Enter') submitAnswer(); });
         window.addEventListener('resize', initBG);
     </script>
